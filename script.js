@@ -121,17 +121,136 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  saveButton.addEventListener("click", function () {
-    const text = expenseText.value.trim();
+saveButton.addEventListener("click", async function () {
+  const text = expenseText.value.trim();
 
-    if (!text) {
-      showStatus(
-        "Vui lòng nhập hoặc nói nội dung chi tiêu.",
-        "error"
+  if (!text) {
+    showStatus(
+      "Vui lòng nhập hoặc nói nội dung chi tiêu.",
+      "error"
+    );
+    return;
+  }
+
+  saveButton.disabled = true;
+  saveButton.textContent = "Đang xử lý...";
+
+  showStatus(
+    "Gemini đang phân tích và ghi dữ liệu...",
+    "loading"
+  );
+
+  try {
+    const response = await fetch(
+      "https://script.google.com/macros/s/AKfycbxEAijCCLkSSxJPtp1ATwChoUvcBqZyu8_2uPbtq1dHM7hgU4dC8ZkQN4toGr4jdw7Erw/exec",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8"
+        },
+        body: JSON.stringify({
+          text: text
+        }),
+        redirect: "follow"
+      }
+    );
+
+    const responseText = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(responseText);
+    } catch (error) {
+      throw new Error(
+        "API không trả về JSON hợp lệ: " + responseText
       );
-      return;
     }
 
-    alert("Nội dung đã nhận được:\n\n" + text);
-  });
+    if (!data.success) {
+      throw new Error(
+        data.message || "Không thể xử lý giao dịch."
+      );
+    }
+
+    showStatus(data.message, "success");
+
+    renderExpenses(data.expenses || []);
+
+    expenseText.value = "";
+
+  } catch (error) {
+    console.error(error);
+
+    showStatus(
+      error.message || String(error),
+      "error"
+    );
+
+  } finally {
+    saveButton.disabled = false;
+    saveButton.textContent = "Phân tích và lưu";
+  }
+});
+function renderExpenses(expenses) {
+  const result = document.getElementById("result");
+
+  if (!Array.isArray(expenses) || expenses.length === 0) {
+    result.innerHTML = "";
+    return;
+  }
+
+  result.innerHTML = expenses
+    .map(function (expense) {
+      return `
+        <article class="expense-item">
+          <div class="expense-title">
+            ${escapeHtml(
+              expense.description || "Giao dịch"
+            )}
+          </div>
+
+          <div class="expense-detail">
+            Danh mục:
+            ${escapeHtml(
+              expense.category || "Khác"
+            )}
+          </div>
+
+          <div class="expense-detail">
+            Số tiền:
+            <span class="amount">
+              ${formatMoney(expense.amount)}
+            </span>
+          </div>
+
+          <div class="expense-detail">
+            Thanh toán:
+            ${escapeHtml(
+              expense.payment || "Tiền mặt"
+            )}
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+
+function formatMoney(value) {
+  return (
+    Number(value || 0).toLocaleString("vi-VN") +
+    " đ"
+  );
+}
+
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}  
 });
