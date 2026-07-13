@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>Expense AI</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <main class="container">
+    <h1>Expense AI</h1>
+
+    <p class="subtitle">
+      Nhập hoặc nói một hay nhiều khoản chi tiêu trong cùng một câu.
+    </p>
+
+    <textarea
+      id="expenseText"
+      placeholder="Ví dụ: Ăn tối 120 nghìn và mua nước 25 nghìn bằng Momo"
+    ></textarea>
+
+    <button
+      id="voiceButton"
+      type="button"
+      class="voice-button"
+    >
+      🎤 Nhấn để nói
+    </button>
+
+    <button
+      id="saveButton"
+      type="button"
+    >
+      Phân tích và lưu
+    </button>
+
+    <div
+      id="status"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+    <section id="result"></section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
